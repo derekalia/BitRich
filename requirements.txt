@@ -3,3 +3,11 @@ pyautogui
 pyscreeze
 
 pillow
+
+pandas 
+
+numpya
+
+Groq
+
+gradio_client
