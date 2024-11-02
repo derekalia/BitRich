@@ -22,7 +22,7 @@ class GradioAPI:
         load_dotenv()
         #self.api_key = os.getenv("OPENROUTERAPIKEY")
         self.huggingFaceToken = os.getenv("HUGGING_FACE_HUB_TOKEN")
-        self.client = Client.duplicate("derekalia/OmniParser2", hf_token= self.huggingFaceToken, sleep_timeout= 40.0)  # Initialize the Gradio client
+        self.client = Client.duplicate("derekalia/OmniParser2", hf_token= self.huggingFaceToken, sleep_timeout= 10.0)  # Initialize the Gradio client
         #print(self.huggingFaceToken)
 
         # Configure logging

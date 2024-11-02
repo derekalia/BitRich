@@ -42,6 +42,7 @@ class MotherAgent:
             screenshot = pyautogui.screenshot()
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
                 screenshot.save(temp_file.name)
+                print(temp_file.name)
                 return temp_file.name
         except Exception as e:
             logging.error(f"Error taking screenshot: {e}")
@@ -164,7 +165,7 @@ class MotherAgent:
 if __name__ == "__main__":
     mother_agent = MotherAgent()
     try:
-        mother_agent.run("Type 'hello' in the search bar at the top of the current page")
+        mother_agent.run("Press search button at the top of the screen")
     except Exception as e:
         logging.error(f"Critical failure in the main run: {e}")
         print(f"Critical failure in the main run: {e}")
