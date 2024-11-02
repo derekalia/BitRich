@@ -17,7 +17,7 @@ import base64
 
 return True or False to the calling function
 '''
-
+'''
 def parse_and_combine_output(output_string):
     # Split the input string to separate the text data and coordinate data
     output_parts = output_string.split("', '")
@@ -47,7 +47,7 @@ def parse_and_combine_output(output_string):
 
     # Return the combined data as a JSON
     return json.dumps(combined_data, indent=4)
-
+'''
 def retrieveJson() -> dict:
     #request screenshot and convert to json through the api cv model
 
@@ -78,7 +78,7 @@ def retrieveJson() -> dict:
     with open(file_path, "r") as json_file:
         currentPageDict = json.load(json_file)'''
     
-    return parse_and_combine_output(result)
+    return result
 
 def encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
@@ -139,11 +139,11 @@ def read_json_to_dict(file_path):
     return data
 
 def doubleCheckAgent(desiredState: str):
-    ''' load_dotenv()
+    load_dotenv()
     currentPageDict = retrieveJson()
     print(currentPageDict)
-    '''
-    file_path = '/Users/mob/Desktop/BitRich/TestCVOutput.json'  # Replace with your JSON file path
+
+    '''file_path = '/Users/mob/Desktop/BitRich/TestCVOutput.json'  # Replace with your JSON file path
     local_dict = read_json_to_dict(file_path)
 
     currentPageDict = local_dict
@@ -155,7 +155,7 @@ def doubleCheckAgent(desiredState: str):
     bool = runLLaMaDoubleCheckAgent(stateCheckStr, currentPageDict, imagePath)
 
     print(bool)
-    
+    '''
 
 
     return 
