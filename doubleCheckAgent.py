@@ -18,23 +18,22 @@ class PageVerificationAgent:
             load_dotenv()
             self.api_key = os.getenv("OPENROUTERAPIKEY")
             self.gradio_api = GradioAPI()  # Using the shared GradioAPI instance
+            self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         except Exception as e:
             logging.error(f"Error during PageVerificationAgent initialization: {e}")
             raise
 
     def retrieve_json(self):
         try:
+            # Take a screenshot and save it to a temporary file
             screenshot = pyautogui.screenshot()
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
                 screenshot.save(temp_file.name)
                 temp_file_path = temp_file.name
 
-            # Directly use the client instance to predict
-            result = self.gradio_api.client.predict(
-                image_input=temp_file_path,  # Directly pass the image path
-                box_threshold=0.05,
-                iou_threshold=0.1,
-                api_name="/process"
+            # Use Gradio client to make a prediction call
+            result = self.gradio_api.call_gradio_api(
+                temp_file_path # Directly pass the image path
             )
 
             return result, temp_file_path
@@ -42,6 +41,7 @@ class PageVerificationAgent:
             logging.error(f"Error retrieving JSON data: {e}")
             print(f"Error retrieving JSON data: {e}")
             raise
+
 
     def encode_image_to_base64(self, image_path):
         try:

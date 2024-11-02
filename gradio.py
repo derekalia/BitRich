@@ -2,6 +2,10 @@ from gradio_client import Client, handle_file
 import os
 import logging
 from dotenv import load_dotenv
+from huggingface_hub import login
+
+# Login with your token to ensure authentication
+#login(token = os.getenv("HUGGING_FACE_HUB_TOKEN"))
 
 class GradioAPI:
     _instance = None
@@ -17,7 +21,8 @@ class GradioAPI:
         """Initializes the GradioAPI instance."""
         load_dotenv()
         self.api_key = os.getenv("OPENROUTERAPIKEY")
-        self.client = Client("derekalia/OmniParser2")  # Initialize the Gradio client
+        huggingFaceToken = os.getenv("HUGGING_FACE_HUB_TOKEN")
+        self.client = Client.duplicate("derekalia/OmniParser2", hf_token=huggingFaceToken)  # Initialize the Gradio client
 
         # Configure logging
         logging.basicConfig(
