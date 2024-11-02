@@ -19,8 +19,9 @@ class MotherAgent:
         self.overall_goal = ""
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
 
-        # Configure logging
-        logging.basicConfig(filename='mother_agent.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+        # Configure logging with detailed formatting
+        logging.basicConfig(filename='mother_agent.log', level=logging.INFO, 
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
     def log_goal(self, message):
         """Logs goal messages."""
@@ -28,8 +29,12 @@ class MotherAgent:
 
     def create_initial_goal(self, overall_goal):
         """Creates the initial goal based on the overall objective."""
-        self.overall_goal = overall_goal
-        return f"Determine the first step to achieve the overall goal: {overall_goal}"
+        try:
+            self.overall_goal = overall_goal
+            return f"Determine the first step to achieve the overall goal: {overall_goal}"
+        except Exception as e:
+            logging.error(f"Error creating initial goal: {e}")
+            raise
 
     def take_screenshot(self):
         """Takes a screenshot and saves it as a temporary file."""
@@ -78,21 +83,28 @@ class MotherAgent:
 
             response = requests.post(self.verification_agent.base_url, headers=headers, json=payload)
 
-            response.raise_for_status()  # Raise HTTPError for bad responses
+            if response.status_code != 200:
+                logging.error(f"Error in generate_next_goal: HTTP {response.status_code} - {response.text}")
+                print(f"Error in generate_next_goal: HTTP {response.status_code} - {response.text}")
+                response.raise_for_status()  # Raise HTTPError for handling
 
             result = response.json()
             return result['choices'][0]['message']['content']
         except requests.exceptions.HTTPError as http_err:
-            logging.error(f"HTTP error occurred: {http_err}")
-            print(f"HTTP error occurred: {http_err}")
+            logging.error(f"HTTP error occurred in generate_next_goal: {http_err}")
+            print(f"HTTP error occurred in generate_next_goal: {http_err}")
             raise
         except requests.exceptions.RequestException as req_err:
-            logging.error(f"Request error: {req_err}")
-            print(f"Request error: {req_err}")
+            logging.error(f"Request error in generate_next_goal: {req_err}")
+            print(f"Request error in generate_next_goal: {req_err}")
+            raise
+        except json.JSONDecodeError as json_err:
+            logging.error(f"JSON decoding error in generate_next_goal: {json_err}")
+            print(f"JSON decoding error in generate_next_goal: {json_err}")
             raise
         except Exception as e:
-            logging.error(f"Error generating the next goal: {e}")
-            print(f"Error generating the next goal: {e}")
+            logging.error(f"Unexpected error in generate_next_goal: {e}")
+            print(f"Unexpected error in generate_next_goal: {e}")
             raise
 
     def run(self, overall_goal):
@@ -104,14 +116,27 @@ class MotherAgent:
 
             while not goal_completed and attempt_count < self.goal_attempts:
                 self.log_goal(f"Attempt {attempt_count + 1} - Current goal: {current_goal}")
-                screenshot_path = self.take_screenshot()
-                current_screen_json, _ = self.verification_agent.retrieve_json()
+                try:
+                    screenshot_path = self.take_screenshot()
+                    current_screen_json, _ = self.verification_agent.retrieve_json()
+                except Exception as e:
+                    logging.error(f"Error in retrieving screenshot or JSON data: {e}")
+                    print(f"Error in retrieving screenshot or JSON data: {e}")
+                    raise
 
-                # Run the action function here (not implemented in this sample)
-                action_result = self.doAgent.runDoAgent(current_goal)
+                try:
+                    action_result = self.doAgent.runDoAgent(current_goal)
+                except Exception as e:
+                    logging.error(f"Error executing action in runDoAgent: {e}")
+                    print(f"Error executing action in runDoAgent: {e}")
+                    raise
 
-                # For now, assume the action was taken; check if the goal was met
-                result = self.verification_agent.double_check_agent("Expected state after: " + current_goal)
+                try:
+                    result = self.verification_agent.double_check_agent("Expected state after: " + current_goal)
+                except Exception as e:
+                    logging.error(f"Error during double check: {e}")
+                    print(f"Error during double check: {e}")
+                    raise
 
                 if result == "true":
                     self.completed_goals.append(current_goal)
@@ -138,4 +163,8 @@ class MotherAgent:
 # Example usage
 if __name__ == "__main__":
     mother_agent = MotherAgent()
-    mother_agent.run("Type 'hello' in the search bar")
+    try:
+        mother_agent.run("Type 'hello' in the search bar")
+    except Exception as e:
+        logging.error(f"Critical failure in the main run: {e}")
+        print(f"Critical failure in the main run: {e}")
