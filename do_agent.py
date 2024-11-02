@@ -65,9 +65,10 @@ class PageDoAgent:
 
             # Initial prompt for element identification
             system_prompt = (
-                "You are a helpful assistant. I'll provide you with the JSON file containing the elements of the website, "
-                "and please reply with the possible element to open the notification with the format in JSON only like "
-                "Element:{\"Icon Box ID\": 175, \"Coordinates\": [3122, 257, 101, 106], \"Description\": \"a notification or alert.\"}"
+                "You are a helpful assistant. I'll provide you with the JSON file containing the elements of the website. "
+                "Please analyze it and return the possible element needed to achieve the user's goal. Format the response as a JSON object only, "
+                "e.g., {\"Icon Box ID\": 175, \"Coordinates\": [3122, 257, 101, 106], \"Description\": \"a notification or alert.\"}. "
+                "Do not include any additional text outside of the JSON object."
             )
             initial_user_prompt = f"The JSON of the website elements is as follows:\n{current_page_dict}\n"
 
@@ -87,6 +88,13 @@ class PageDoAgent:
             element_info = initial_response.json()['choices'][0]['message']['content']
 
             # Final prompt to generate Python code
+            system_prompt_code = (
+                "You are a helpful assistant. I will provide you with a JSON containing elements of a website and the user's action. "
+                "Generate Python code using the `pyautogui` library to achieve the requested action. "
+                "Ensure the code is complete, formatted as a plain Python script, and runs independently without further modification. "
+                "Output only the raw Python code without any markdown or additional formatting."
+            )
+
             final_user_prompt = (
                 "The JSON of the website elements is as follows:\n"
                 f"{element_info}\n"
@@ -96,33 +104,25 @@ class PageDoAgent:
             final_payload = {
                 "model": "meta-llama/llama-3.2-90b-vision-instruct",
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a helpful assistant. I'll provide you with the JSON containing the elements of the website, "
-                            "and please create the Python code using pyautogui to achieve the function requested by the user. "
-                            "Answer only with the Python code, without anything else, in double quotes only. Make sure to wrap it in double quotes."
-                        )
-                    },
+                    {"role": "system", "content": system_prompt_code},
                     {"role": "user", "content": final_user_prompt}
                 ],
                 "image": encoded_image,
                 "temperature": 0.0
             }
 
-            
             # Make the final API call to OpenRouter for LLaMA
             final_response = requests.post(self.base_url, headers=headers, json=final_payload)
             final_response.raise_for_status()
             code = final_response.json()['choices'][0]['message']['content']
             code = code.strip('```python').strip('```').strip()
 
-            conda_env_name = 'myenv'
-            conda_env_path = os.path.join('/Users/mob/anaconda3/envs', conda_env_name, 'bin', 'python')
+            venv_python_path = '/Users/mob/Desktop/BitRich/venv/bin/python'  
+            
 
             print(code)
-            # Run the generated Python code using the Conda environment's Python
-            subprocess.run([conda_env_path, '-c', code], check=True)
+            code = code.replace('\\n', '\n')
+            subprocess.run([venv_python_path, '-c', code], check=True)
 
         except requests.exceptions.HTTPError as http_err:
             logging.error(f"HTTP error in run_do_agent: {http_err}")

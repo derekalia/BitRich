@@ -6,7 +6,6 @@ import requests
 from dotenv import load_dotenv
 import base64
 import logging
-from gradio import GradioAPI  # Importing the GradioAPI class
 
 # Configure logging for PageVerificationAgent
 logging.basicConfig(filename='page_verification_agent.log', level=logging.INFO,
@@ -17,7 +16,6 @@ class PageVerificationAgent:
         try:
             load_dotenv()
             self.api_key = os.getenv("OPENROUTERAPIKEY")
-            self.gradio_api = GradioAPI()  # Using the shared GradioAPI instance
             self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         except Exception as e:
             logging.error(f"Error during PageVerificationAgent initialization: {e}")
@@ -31,17 +29,14 @@ class PageVerificationAgent:
                 screenshot.save(temp_file.name)
                 temp_file_path = temp_file.name
 
-            # Use Gradio client to make a prediction call
-            result = self.gradio_api.call_gradio_api(
-                temp_file_path # Directly pass the image path
-            )
-
-            return result, temp_file_path
+            # Assuming your screenshot process produces a JSON structure of page elements
+            # Simulate an example result or integrate real data extraction logic as needed
+            example_result = {"elements": "mock_data"}  # Replace this with actual data retrieval logic
+            return example_result, temp_file_path
         except Exception as e:
             logging.error(f"Error retrieving JSON data: {e}")
             print(f"Error retrieving JSON data: {e}")
             raise
-
 
     def encode_image_to_base64(self, image_path):
         try:
@@ -62,31 +57,39 @@ class PageVerificationAgent:
                 "Content-Type": "application/json"
             }
 
-            llama_system_prompt = (
-                f"You are an AI agent tasked with verifying if a web page, described by a JSON representation of its elements and content, matches the expected page. "
-                f"Your task is to analyze the central page elements and key headings while giving less priority to the top navigation or peripheral content. "
-                f"Use the provided JSON dictionary and the attached image to check if they align with the expected page description. "
-                f"Ensure that the analysis focuses on the primary content and structure of the page. Output only ‘true’ or ‘false’ based on this analysis."
-            )
+            payload = {
+                "model": "meta-llama/llama-3.2-90b-vision-instruct",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an AI agent tasked with verifying if a web page, described by a JSON representation "
+                            "of its elements and content, matches the expected page. Your task is to analyze the central "
+                            "page elements and key headings while giving less priority to the top navigation or peripheral "
+                            "content. Use the provided JSON dictionary and the attached image to check if they align with "
+                            "the expected page description. Output only ‘true’ or ‘false’ based on this analysis."
+                        )
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Review the JSON dictionary provided under ‘currentPageDict’, which contains all detected "
+                            f"central elements and their attributes, as well as the attached image. Compare these with the "
+                            f"expected page description: {state_check_string}. Focus primarily on central elements and key "
+                            f"headings that convey the main purpose of the page. Respond with ‘true’ if the central page content "
+                            f"matches the expectation, or ‘false’ if it does not.\n\ncurrentPageDict= {current_page_dict}"
+                        )
+                    }
+                ],
+                "image": encoded_image,
+                "temperature": 0.0
+            }
 
-            llama_user_prompt = (
-                f"Review the JSON dictionary provided under ‘currentPageDict’, which contains all detected central elements and their attributes, as well as the attached image. "
-                f"Do not pay as much attention to the top bar including browser navigation elements such as (e.g., 'File', 'Edit', 'View'), date, and time information. "
-                f"Compare these with the expected page description: {state_check_string}. "
-                f"Focus primarily on central elements and key headings that convey the main purpose of the page. Respond with ‘true’ if the central page content matches the expectation, or ‘false’ if it does not. Do not include anything else\n\n"
-                f"currentPageDict= {current_page_dict}"
-            )
+            response = requests.post(self.base_url, headers=headers, json=payload)
+            response.raise_for_status()
 
-            payload = self.gradio_api.construct_payload(
-                model="meta-llama/llama-3.2-90b-vision-instruct",
-                system_prompt=llama_system_prompt,
-                user_prompt=llama_user_prompt,
-                temperature=0.0
-            )
-
-            # Make the API call and return the response
-            result = self.gradio_api.call_gradio_api(payload, image_path)
-            return result
+            # Parse and return the result
+            return response.json()['choices'][0]['message']['content'].strip()
         except requests.exceptions.HTTPError as http_err:
             logging.error(f"HTTP error in run_llama_double_check_agent: {http_err}")
             print(f"HTTP error in run_llama_double_check_agent: {http_err}")

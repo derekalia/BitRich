@@ -164,7 +164,7 @@ class MotherAgent:
 if __name__ == "__main__":
     mother_agent = MotherAgent()
     try:
-        mother_agent.run("Type 'hello' in the search bar")
+        mother_agent.run("Type 'hello' in the search bar at the top of the current page")
     except Exception as e:
         logging.error(f"Critical failure in the main run: {e}")
         print(f"Critical failure in the main run: {e}")

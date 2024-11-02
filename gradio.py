@@ -20,9 +20,10 @@ class GradioAPI:
     def _initialize(self):
         """Initializes the GradioAPI instance."""
         load_dotenv()
-        self.api_key = os.getenv("OPENROUTERAPIKEY")
-        huggingFaceToken = os.getenv("HUGGING_FACE_HUB_TOKEN")
-        self.client = Client.duplicate("derekalia/OmniParser2", hf_token=huggingFaceToken)  # Initialize the Gradio client
+        #self.api_key = os.getenv("OPENROUTERAPIKEY")
+        self.huggingFaceToken = os.getenv("HUGGING_FACE_HUB_TOKEN")
+        self.client = Client.duplicate("derekalia/OmniParser2", hf_token= self.huggingFaceToken)  # Initialize the Gradio client
+        #print(self.huggingFaceToken)
 
         # Configure logging
         logging.basicConfig(
@@ -45,3 +46,4 @@ class GradioAPI:
             logging.error(f"Error calling Gradio API: {e}")
             print(f"Error calling Gradio API: {e}")
             raise
+
