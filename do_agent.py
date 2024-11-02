@@ -65,12 +65,11 @@ class PageDoAgent:
 
             # Initial prompt for element identification
             system_prompt = (
-                "You are a helpful assistant. I'll provide you with the JSON file containing the elements of the website. "
-                "Please analyze it and return the possible element needed to achieve the user's goal. Format the response as a JSON object only, "
-                "e.g., {\"Icon Box ID\": 175, \"Coordinates\": [3122, 257, 101, 106], \"Description\": \"a notification or alert.\"}. "
-                "Do not include any additional text outside of the JSON object."
+                "You are an assistant specialized in automating tasks on web pages. Analyze the JSON data containing the elements of a web page and extract relevant components to perform the specified task. "
+                "Respond only with a JSON object that includes the coordinates of relevant elements (e.g., {\"Element Name\": ..., \"Coordinates\": ..., \"Description\": ...}). "
+                "Ensure the response is focused on providing coordinates only and avoid using functions like 'getActiveWindowTitle' or other window-handling code."
             )
-            initial_user_prompt = f"The JSON of the website elements is as follows:\n{current_page_dict}\n"
+            initial_user_prompt = f"Here is the JSON data of the web page:\n{current_page_dict}\n"
 
             initial_payload = {
                 "model": "meta-llama/llama-3.2-90b-vision-instruct",
@@ -83,22 +82,22 @@ class PageDoAgent:
             }
 
             # Make the initial API call to OpenRouter for LLaMA
-            initial_response = requests.post(self.base_url, headers=headers, json=initial_payload)
+            initial_response = requests.post(self.base_url, headers=headers, json=initial_payload, timeout=10)
             initial_response.raise_for_status()
             element_info = initial_response.json()['choices'][0]['message']['content']
 
             # Final prompt to generate Python code
             system_prompt_code = (
-                "You are a helpful assistant. I will provide you with a JSON containing elements of a website and the user's action. "
-                "Generate Python code using the `pyautogui` library to achieve the requested action. "
-                "Ensure the code is complete, formatted as a plain Python script, and runs independently without further modification. "
-                "Output only the raw Python code without any markdown or additional formatting."
+                "You are an AI agent that generates Python code using the `pyautogui` library to automate interactions with a web page. "
+                "Generate Python code that uses only the coordinates provided in the JSON data to move the mouse, click, and type as necessary. "
+                "Do not include any functions for window handling like 'getActiveWindowTitle' or anything that interacts with the operating system's windowing system. "
+                "Ensure the code runs independently, using only the given coordinates and `pyautogui` functions. Respond with raw Python code only."
             )
 
             final_user_prompt = (
-                "The JSON of the website elements is as follows:\n"
+                "Here is the JSON data for the web page elements and relevant coordinates:\n"
                 f"{element_info}\n"
-                f"Do: {action}"
+                f"Perform the following task: {action}"
             )
 
             final_payload = {
@@ -118,11 +117,27 @@ class PageDoAgent:
             code = code.strip('```python').strip('```').strip()
 
             venv_python_path = '/Users/mob/Desktop/BitRich/venv/bin/python'  
-            
 
-            print(code)
-            code = code.replace('\\n', '\n')
-            subprocess.run([venv_python_path, '-c', code], check=True)
+            #pyautogui.FAILSAFE = False
+
+            code = final_response.json()['choices'][0]['message']['content']
+            code = code.strip('```python').strip('```').strip()  # Remove any formatting indicators
+
+            # Remove non-Python explanations or appended text outside of the code
+            if '```' in code:
+                code = code.split('```')[0]  # Retain only the code portion before any markdown remnants
+
+            venv_python_path = '/Users/mob/Desktop/BitRich/venv/bin/python'
+
+            print("Executing the following code:")
+            print(code)  # Display the cleaned Python code for verification
+
+            try:
+                subprocess.run([venv_python_path, '-c', code], check=True)
+            except subprocess.CalledProcessError as sub_err:
+                logging.error(f"Subprocess execution error: {sub_err}")
+                print(f"Subprocess execution error: {sub_err}")
+                raise
 
         except requests.exceptions.HTTPError as http_err:
             logging.error(f"HTTP error in run_do_agent: {http_err}")
