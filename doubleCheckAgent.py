@@ -18,8 +18,6 @@ def retrieveJson() -> dict:
     #testing:
     #screenshot.show()  WORKS
 
-    
-
     currentPageDict = {}
 
     return currentPageDict

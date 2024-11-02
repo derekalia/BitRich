@@ -1,0 +1,204 @@
+{
+    "elements": [
+        {
+            "id": 0,
+            "name": "Chrome",
+            "coordinates": [
+                106,
+                19,
+                106,
+                31
+            ]
+        },
+        {
+            "id": 1,
+            "name": "File",
+            "coordinates": [
+                246,
+                22,
+                50,
+                28
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Edit",
+            "coordinates": [
+                330,
+                22,
+                55,
+                28
+            ]
+        },
+        {
+            "id": 3,
+            "name": "View",
+            "coordinates": [
+                419,
+                22,
+                66,
+                28
+            ]
+        },
+        {
+            "id": 4,
+            "name": "History",
+            "coordinates": [
+                516,
+                16,
+                98,
+                42
+            ]
+        },
+        {
+            "id": 5,
+            "name": "Bookmarks",
+            "coordinates": [
+                648,
+                22,
+                139,
+                28
+            ]
+        },
+        {
+            "id": 6,
+            "name": "Profiles",
+            "coordinates": [
+                824,
+                22,
+                96,
+                28
+            ]
+        },
+        {
+            "id": 7,
+            "name": "Tab",
+            "coordinates": [
+                956,
+                22,
+                47,
+                28
+            ]
+        },
+        {
+            "id": 8,
+            "name": "Window",
+            "coordinates": [
+                1040,
+                22,
+                101,
+                28
+            ]
+        },
+        {
+            "id": 9,
+            "name": "Help",
+            "coordinates": [
+                1177,
+                22,
+                61,
+                31
+            ]
+        },
+        {
+            "id": 10,
+            "name": "J 8 0 * W)",
+            "coordinates": [
+                2445,
+                15,
+                317,
+                44
+            ]
+        },
+        {
+            "id": 11,
+            "name": "0",
+            "coordinates": [
+                2775,
+                18,
+                60,
+                36
+            ]
+        },
+        {
+            "id": 12,
+            "name": "Thu Oct 31",
+            "coordinates": [
+                3130,
+                19,
+                139,
+                31
+            ]
+        },
+        {
+            "id": 13,
+            "name": "1:30:50PM",
+            "coordinates": [
+                3281,
+                19,
+                144,
+                31
+            ]
+        },
+        {
+            "id": 14,
+            "name": "522.18",
+            "coordinates": [
+                281,
+                100,
+                85,
+                28
+            ]
+        },
+        {
+            "id": 15,
+            "name": "ETH USD",
+            "coordinates": [
+                378,
+                100,
+                112,
+                28
+            ]
+        },
+        {
+            "id": 16,
+            "name": "Decent",
+            "coordinates": [
+                502,
+                100,
+                85,
+                28
+            ]
+        },
+        {
+            "id": 17,
+            "name": "app gmx iol#Itrade",
+            "coordinates": [
+                307,
+                182,
+                260,
+                42
+            ]
+        },
+        {
+            "id": 18,
+            "name": "0",
+            "coordinates": [
+                3022,
+                176,
+                60,
+                49
+            ]
+        },
+        {
+            "id": 19,
+            "name": "Finish update",
+            "coordinates": [
+                3216,
+                187,
+                174,
+                33
+            ]
+        }
+    ]
+}
