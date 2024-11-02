@@ -1,12 +1,12 @@
 import pyautogui
 import json
 import os
-from gradio_client import Client, handle_file
 import tempfile
 import requests
 from dotenv import load_dotenv
 import base64
 import logging
+from gradio import GradioAPI  # Importing the GradioAPI class
 
 # Configure logging for PageVerificationAgent
 logging.basicConfig(filename='page_verification_agent.log', level=logging.INFO,
@@ -17,8 +17,7 @@ class PageVerificationAgent:
         try:
             load_dotenv()
             self.api_key = os.getenv("OPENROUTERAPIKEY")
-            self.client = Client("derekalia/OmniParser2")
-            self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+            self.gradio_api = GradioAPI()  # Using the shared GradioAPI instance
         except Exception as e:
             logging.error(f"Error during PageVerificationAgent initialization: {e}")
             raise
@@ -30,8 +29,9 @@ class PageVerificationAgent:
                 screenshot.save(temp_file.name)
                 temp_file_path = temp_file.name
 
-            result = self.client.predict(
-                image_input=handle_file(temp_file_path),
+            # Directly use the client instance to predict
+            result = self.gradio_api.client.predict(
+                image_input=temp_file_path,  # Directly pass the image path
                 box_threshold=0.05,
                 iou_threshold=0.1,
                 api_name="/process"
@@ -77,21 +77,16 @@ class PageVerificationAgent:
                 f"currentPageDict= {current_page_dict}"
             )
 
-            payload = {
-                "model": "meta-llama/llama-3.2-90b-vision-instruct",
-                "messages": [
-                    {"role": "system", "content": llama_system_prompt},
-                    {"role": "user", "content": llama_user_prompt}
-                ],
-                "image": encoded_image,
-                "temperature": 0.0
-            }
+            payload = self.gradio_api.construct_payload(
+                model="meta-llama/llama-3.2-90b-vision-instruct",
+                system_prompt=llama_system_prompt,
+                user_prompt=llama_user_prompt,
+                temperature=0.0
+            )
 
-            response = requests.post(self.base_url, headers=headers, json=payload)
-            response.raise_for_status()  # Raise an HTTPError for bad responses
-
-            result = response.json()
-            return result['choices'][0]['message']['content']
+            # Make the API call and return the response
+            result = self.gradio_api.call_gradio_api(payload, image_path)
+            return result
         except requests.exceptions.HTTPError as http_err:
             logging.error(f"HTTP error in run_llama_double_check_agent: {http_err}")
             print(f"HTTP error in run_llama_double_check_agent: {http_err}")

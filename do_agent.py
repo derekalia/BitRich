@@ -1,14 +1,12 @@
 import pyautogui
-import json
 import os
-from gradio_client import Client, handle_file
 import tempfile
-import re
-import requests
-from dotenv import load_dotenv
-import base64
 import subprocess
+import requests
+import json
 import logging
+from dotenv import load_dotenv
+from gradio import GradioAPI  # Ensure the import path is correct
 
 # Configure logging for PageDoAgent
 logging.basicConfig(filename='page_do_agent.log', level=logging.INFO, 
@@ -19,21 +17,22 @@ class PageDoAgent:
         try:
             load_dotenv()
             self.api_key = os.getenv("OPENROUTERAPIKEY")
-            self.client = Client("derekalia/OmniParser2")
-            self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+            self.gradio_api = GradioAPI()  # Use the singleton instance of GradioAPI
         except Exception as e:
             logging.error(f"Error during PageDoAgent initialization: {e}")
             raise
 
     def retrieve_json(self):
         try:
+            # Take a screenshot and save it to a temporary file
             screenshot = pyautogui.screenshot()
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
                 screenshot.save(temp_file.name)
                 temp_file_path = temp_file.name
 
-            result = self.client.predict(
-                image_input=handle_file(temp_file_path),
+            # Use Gradio client to make a prediction call
+            result = self.gradio_api.client.predict(
+                image_input=temp_file_path,  # Directly pass the image path
                 box_threshold=0.05,
                 iou_threshold=0.1,
                 api_name="/process"
@@ -45,100 +44,52 @@ class PageDoAgent:
             print(f"Error retrieving JSON data: {e}")
             raise
 
-    def encode_image_to_base64(self, image_path):
-        try:
-            with open(image_path, "rb") as image_file:
-                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-            return encoded_string
-        except Exception as e:
-            logging.error(f"Error encoding image to Base64: {e}")
-            print(f"Error encoding image to Base64: {e}")
-            raise
-
     def run_do_agent(self, action, current_page_dict, image_path):
         try:
-            # Encode the image to Base64
-            encoded_image = self.encode_image_to_base64(image_path)
+            # Create and send payloads for processing
+            system_prompt = (
+                "You are a helpful assistant. I'll provide you with the JSON file containing the elements of the website, "
+                "and please reply with the possible element to open the notification with the format in JSON only like "
+                "Element:{\"Icon Box ID\": 175, \"Coordinates\": [3122, 257, 101, 106], \"Description\": \"a notification or alert.\"}"
+            )
+            initial_user_prompt = f"The JSON of the website elements is as follows:\n{current_page_dict}\n"
 
-            # Set headers for the API request
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-
-            # Initial user prompt with JSON of website elements
-            initial_user_prompt = (
-                "The JSON of the website elements is as follows:\n"
-                f"{current_page_dict}\n"
+            # Generate the initial response
+            element_info = self.gradio_api.call_gradio_api(
+                self.gradio_api.construct_payload(
+                    model="meta-llama/llama-3.2-90b-vision-instruct",
+                    system_prompt=system_prompt,
+                    user_prompt=initial_user_prompt,
+                    temperature=0.0
+                ),
+                image_path
             )
 
-            # Define the initial payload to identify the notification element
-            initial_payload = {
-                "model": "meta-llama/llama-3.2-90b-vision-instruct",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a helpful assistant. I'll provide you with the JSON file containing the elements of the website, "
-                            "and please reply with the possible element to open the notification with the format in JSON only like "
-                            "Element:{\"Icon Box ID\": 175, \"Coordinates\": [3122, 257, 101, 106], \"Description\": \"a notification or alert.\"}"
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": initial_user_prompt,
-                    },
-                ],
-                "image": encoded_image,
-                "temperature": 0.0
-            }
-
-            # Send the initial request and parse the response
-            initial_response = requests.post(self.base_url, headers=headers, json=initial_payload)
-            initial_response.raise_for_status()
-            initial_result = initial_response.json()
-            element_info = initial_result['choices'][0]['message']['content']
-
-            # Updated user prompt with action and element information
+            # Create and send the final payload with the action and element info
             final_user_prompt = (
                 "The JSON of the website elements is as follows:\n"
                 f"{element_info}\n"
                 f"Do: {action}"
             )
 
-            # Define the final payload to generate Python code for the action
-            final_payload = {
-                "model": "meta-llama/llama-3.2-90b-vision-instruct",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are a helpful assistant. I'll provide you with the JSON containing the elements of the website, "
-                            "and please create the Python code using pyautogui to achieve the function requested by the user. "
-                            "Answer only with the Python code, without anything else, in double quotes."
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": final_user_prompt,
-                    },
-                ],
-                "image": encoded_image,
-                "temperature": 0.0
-            }
-
-            # Send the final request and parse the response
-            final_response = requests.post(self.base_url, headers=headers, json=final_payload)
-            final_response.raise_for_status()
-            final_result = final_response.json()
-            code = final_result['choices'][0]['message']['content']
+            code = self.gradio_api.call_gradio_api(
+                self.gradio_api.construct_payload(
+                    model="meta-llama/llama-3.2-90b-vision-instruct",
+                    system_prompt=(
+                        "You are a helpful assistant. I'll provide you with the JSON containing the elements of the website, "
+                        "and please create the Python code using pyautogui to achieve the function requested by the user. "
+                        "Answer only with the Python code, without anything else, in double quotes."
+                    ),
+                    user_prompt=final_user_prompt,
+                    temperature=0.0
+                ),
+                image_path
+            )
 
             conda_env_name = 'myenv'
-
-            # Construct the path to the Python executable in that environment
             conda_env_path = os.path.join('/root/miniconda/envs', conda_env_name, 'bin', 'python')
 
-            # Run the script using the Conda environment's Python
+            # Run the generated Python code using the Conda environment's Python
             subprocess.run([conda_env_path, '-c', code], check=True)
 
         except requests.exceptions.HTTPError as http_err:
