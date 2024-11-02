@@ -1,3 +1,5 @@
+import pyautogui
+
 
 '''
 * Screenshot retreival (call from the json file)
@@ -11,6 +13,13 @@ return True or False to the calling function
 def retrieveJson() -> dict:
     #request screenshot and convert to json through the api cv model
 
+    screenshot = pyautogui.screenshot()
+    
+    #testing:
+    #screenshot.show()  WORKS
+
+    
+
     currentPageDict = {}
 
     return currentPageDict
@@ -21,5 +30,7 @@ def doubleCheckAgent(desiredState: str):
     
     currentPageDict = retrieveJson()
     
-    
     return 
+
+if __name__ == "__main__":
+    doubleCheckAgent("testing")
