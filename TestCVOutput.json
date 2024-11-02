@@ -199,6 +199,26 @@
                 174,
                 33
             ]
+        },
+        {
+            "id": 20,
+            "name": "Connect to Wallet",
+            "coordinates": [
+                450,
+                300,
+                150,
+                50
+            ]
+        },
+        {
+            "id": 21,
+            "name": "MetaMask",
+            "coordinates": [
+                500,
+                400,
+                100,
+                40
+            ]
         }
     ]
 }
