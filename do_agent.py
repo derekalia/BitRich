@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 import base64
 import subprocess
 
-class PageVerificationAgent:
+class PageDoAgent:
     def __init__(self):
         load_dotenv()
         self.api_key = os.getenv("OPENROUTERAPIKEY")
@@ -108,6 +108,7 @@ class PageVerificationAgent:
             "temperature": 0.0
         }
 
+
         # Send the final request and parse the response
         final_response = requests.post(self.base_url, headers=headers, json=final_payload)
         final_result = final_response.json()
@@ -120,3 +121,8 @@ class PageVerificationAgent:
 
         # Run the script using the Conda environment's Python
         subprocess.run([conda_env_path, '-c' ,code])
+
+    def runDoAgent(self, action):
+        result, temp_file_path = self.retrieve_json()
+
+        self.run_do_agent(action, result, temp_file_path)
