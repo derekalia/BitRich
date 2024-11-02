@@ -3,20 +3,13 @@ import json
 import requests
 from dotenv import load_dotenv
 
-from page_verification import PageVerificationAgent
+from doubleCheckAgent import PageVerificationAgent
 
+checkAgent = PageVerificationAgent()
 
-
-'''
-
-* enter while loop, objectiveDone == false
-* 
-
-
-'''
 
 def runMother(goal: str):
     goalCompleted = False
 
     while goalCompleted == False:
-
+        print()
